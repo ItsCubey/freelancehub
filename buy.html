@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Buy Gift Card</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #00c92c;
+      text-align: center;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 15px;
+      display: block;
+    }
+    select, input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      background: #00c92c;
+      color: white;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #01991f;
+    }
+    .message {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+    }
+    .success {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h2>Buy Gift Card</h2>
+  <form id="giftCardForm">
+    <label for="type">Select Gift Card:</label>
+    <select id="type" required>
+      <option value="">-- Select --</option>
+      <option value="Amazon">Amazon</option>
+      <option value="Flipkart">Flipkart</option>
+      <option value="Play Store">Play Store</option>
+      <option value="Roblox">Roblox</option>
+      <option value="Steam">Steam</option>
+    </select>
+
+    <label for="credits">Credit Amount to Spend:</label>
+    <input type="number" id="credits" min="1" required />
+
+    <button type="submit">Request Gift Card</button>
+  </form>
+
+  <div id="message" class="message"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwxGQ3GxqZG9hqJAmwfF2ylNRC7uubfbw",
+      authDomain: "hnuhnil.firebaseapp.com",
+      projectId: "hnuhnil",
+      storageBucket: "hnuhnil.appspot.com",
+      messagingSenderId: "731934360686",
+      appId: "1:731934360686:web:9c49e731072cf0a61f927f"
+    };
+
+    // Init Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const form = document.getElementById('giftCardForm');
+    const messageDiv = document.getElementById('message');
+
+    let currentUser = null;
+
+    // Check login
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        messageDiv.textContent = "You must be logged in to buy a gift card.";
+        messageDiv.className = "message error";
+        form.style.display = "none";
+      } else {
+        currentUser = user;
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      messageDiv.textContent = "";
+
+      const type = document.getElementById('type').value;
+      const credits = parseInt(document.getElementById('credits').value);
+
+      if (!type || isNaN(credits) || credits < 1) {
+        messageDiv.textContent = "Please fill in all fields correctly.";
+        messageDiv.className = "message error";
+        return;
+      }
+
+      try {
+        const userRef = db.collection("users").doc(currentUser.uid);
+        const userSnap = await userRef.get();
+
+        if (!userSnap.exists) {
+          messageDiv.textContent = "User data not found.";
+          messageDiv.className = "message error";
+          return;
+        }
+
+        const userData = userSnap.data();
+
+        if (userData.credits < credits) {
+          messageDiv.textContent = "Not enough credits.";
+          messageDiv.className = "message error";
+          return;
+        }
+
+        // Deduct credits and create gift card request
+        await userRef.update({
+          credits: userData.credits - credits
+        });
+
+        await db.collection("giftCardRequests").add({
+          userId: currentUser.uid,
+          giftCardType: type,
+          creditAmount: credits,
+          status: "pending",
+          requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        messageDiv.textContent = "Gift card request sent. You'll receive it within 24 hours via email.";
+        messageDiv.className = "message success";
+        form.reset();
+
+      } catch (err) {
+        messageDiv.textContent = "Error: " + err.message;
+        messageDiv.className = "message error";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Report User</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 480px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #00c92c;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 600;
+    }
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 8px 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      resize: vertical;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #00c92c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #01981a;
+    }
+    .message {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .error {
+      color: #f44336;
+    }
+    .success {
+      color: #4CAF50;
+    }
+  </style>
+</head>
+<body>
+  <h2>Report a User</h2>
+  <form id="reportForm">
+    <label for="reportedUser">Reported User ID or Username:</label>
+    <input type="text" id="reportedUser" required />
+
+    <label for="reason">Reason for Reporting:</label>
+    <input type="text" id="reason" required />
+
+    <label for="details">Additional Details (optional):</label>
+    <textarea id="details" rows="4" placeholder="Provide more info..."></textarea>
+
+    <button type="submit">Submit Report</button>
+  </form>
+
+  <div id="message" class="message"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Your Firebase config here (replace with yours)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwxGQ3GxqZG9hqJAmwfF2ylNRC7uubfbw",
+      authDomain: "hnuhnil.firebaseapp.com",
+      projectId: "hnuhnil",
+      storageBucket: "hnuhnil.appspot.com",
+      messagingSenderId: "731934360686",
+      appId: "1:731934360686:web:9c49e731072cf0a61f927f",
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const reportForm = document.getElementById('reportForm');
+    const messageDiv = document.getElementById('message');
+
+    let currentUser = null;
+
+    // Check auth state
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        messageDiv.textContent = "You must be logged in to report someone.";
+        messageDiv.className = "message error";
+        reportForm.style.display = "none";
+        return;
+      }
+      currentUser = user;
+    });
+
+    reportForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      messageDiv.textContent = "";
+      messageDiv.className = "message";
+
+      if (!currentUser) {
+        messageDiv.textContent = "User not logged in.";
+        messageDiv.className = "message error";
+        return;
+      }
+
+      const reportedUser = document.getElementById('reportedUser').value.trim();
+      const reason = document.getElementById('reason').value.trim();
+      const details = document.getElementById('details').value.trim();
+
+      if (!reportedUser || !reason) {
+        messageDiv.textContent = "Please fill in required fields.";
+        messageDiv.className = "message error";
+        return;
+      }
+
+      try {
+        await db.collection('reports').add({
+          reporterId: currentUser.uid,
+          reportedUser: reportedUser,
+          reason: reason,
+          details: details,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        messageDiv.textContent = "Report submitted successfully. Thank you!";
+        messageDiv.className = "message success";
+        reportForm.reset();
+
+      } catch (error) {
+        messageDiv.textContent = "Error submitting report: " + error.message;
+        messageDiv.className = "message error";
+      }
+    });
+  </script>
+</body>
+</html>

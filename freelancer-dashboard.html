@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Freelancer Dashboard</title>
+<style>
+  body {
+    margin: 0; font-family: 'Inter', sans-serif; background: #f7f7f7; color: #333;
+  }
+  header {
+    background: #ff5a1f;
+    color: white;
+    padding: 15px 30px;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .container {
+    display: flex;
+    min-height: 90vh;
+  }
+  nav {
+    width: 280px;
+    background: white;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+  }
+  nav h2 {
+    margin-bottom: 20px;
+    color: #ff5a1f;
+  }
+  nav a {
+    display: block;
+    margin-bottom: 15px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+  nav a:hover {
+    background: #ff5a1f;
+    color: white;
+  }
+  main {
+    flex-grow: 1;
+    padding: 30px 40px;
+  }
+  .stats {
+    display: flex;
+    gap: 25px;
+    margin-bottom: 30px;
+  }
+  .stat-box {
+    flex: 1;
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+    text-align: center;
+  }
+  .stat-box h3 {
+    margin: 0 0 15px;
+    font-weight: 700;
+    color: #ff5a1f;
+  }
+  .stat-box .number {
+    font-size: 48px;
+    font-weight: 700;
+  }
+  .orders-list {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+  }
+  .orders-list h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #ff5a1f;
+  }
+  .orders-list ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  .orders-list ul li {
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .orders-list ul li:last-child {
+    border-bottom: none;
+  }
+  .btn-view {
+    background: #ff5a1f;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn-view:hover {
+    background: #e04f1b;
+  }
+</style>
+</head>
+<body>
+
+<header>Freelancer Dashboard</header>
+
+<div class="container">
+  <nav>
+    <h2>Hello, Freelancer</h2>
+    <a href="freelancer-dashboard.html">Dashboard</a>
+    <a href="my-orders.html">My Orders</a>
+    <a href="profile.html">Profile</a>
+    <a href="logout.html">Logout</a>
+  </nav>
+
+  <main>
+    <div class="stats">
+      <div class="stat-box">
+        <h3>Total Credits</h3>
+        <div class="number" id="totalCredits">0</div>
+      </div>
+      <div class="stat-box">
+        <h3>Active Orders</h3>
+        <div class="number" id="activeOrders">0</div>
+      </div>
+      <div class="stat-box">
+        <h3>Completed Orders</h3>
+        <div class="number" id="completedOrders">0</div>
+      </div>
+    </div>
+
+    <div class="orders-list">
+      <h3>Recent Orders Received</h3>
+      <ul id="recentOrders">
+        <li>Loading orders...</li>
+      </ul>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDwxGQ3GxqZG9hqJAmwfF2ylNRC7uubfbw",
+    authDomain: "hnuhnil.firebaseapp.com",
+    projectId: "hnuhnil",
+    storageBucket: "hnuhnil.firebasestorage.app",
+    messagingSenderId: "731934360686",
+    appId: "1:731934360686:web:9c49e731072cf0a61f927f"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const totalCredits = document.getElementById('totalCredits');
+  const activeOrders = document.getElementById('activeOrders');
+  const completedOrders = document.getElementById('completedOrders');
+  const recentOrders = document.getElementById('recentOrders');
+
+  auth.onAuthStateChanged(async user => {
+    if (!user) {
+      window.location.href = 'login.html'; // redirect if not logged in
+      return;
+    }
+
+    // Fetch freelancer user data
+    const doc = await db.collection('users').doc(user.uid).get();
+    if (!doc.exists) {
+      totalCredits.textContent = "User data not found.";
+      activeOrders.textContent = '-';
+      completedOrders.textContent = '-';
+      recentOrders.innerHTML = '<li>No recent orders</li>';
+      return;
+    }
+    const data = doc.data();
+
+    // Show total credits from user document
+    totalCredits.textContent = data.credits ?? 0;
+
+    // Calculate active and completed orders from orders collection
+    const ordersSnapshot = await db.collection('orders')
+      .where('freelancerEmail', '==', user.email)
+      .get();
+
+    let active = 0;
+    let completed = 0;
+    const recent = [];
+
+    ordersSnapshot.forEach(orderDoc => {
+      const order = orderDoc.data();
+      if (order.status === 'completed') {
+        completed++;
+      } else if (order.status === 'active' || order.status === 'in-progress') {
+        active++;
+      }
+      recent.push(order);
+    });
+
+    activeOrders.textContent = active;
+    completedOrders.textContent = completed;
+
+    if (recent.length === 0) {
+      recentOrders.innerHTML = '<li>No recent orders</li>';
+    } else {
+      recentOrders.innerHTML = '';
+      recent
+        .sort((a,b) => b.createdAt?.toDate() - a.createdAt?.toDate())
+        .slice(0, 5)
+        .forEach(order => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <strong>${order.title || 'Untitled'}</strong> - 
+            Status: <em>${order.status || 'pending'}</em> - 
+            ₹${order.price?.toFixed(2) || '0.00'}
+            <button class="btn-view" onclick="alert('Open order details for ${order.title || ''}')">View</button>
+          `;
+          recentOrders.appendChild(li);
+        });
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Freelance Platform</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+    header, footer { background: #222; color: #fff; padding: 10px; text-align: center; }
+    main { padding: 20px; }
+    input, button, select, textarea { display: block; margin: 10px 0; padding: 8px; width: 100%; max-width: 400px; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+    .hidden { display: none; }
+    .message { padding: 10px; margin-top: 10px; background: lightgreen; border-radius: 5px; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Freelancer Platform</h1>
+  </header>
+
+  <main>
+    <div class="container" id="auth-section">
+      <h2>Login / Signup</h2>
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+      <button onclick="signup()">Signup</button>
+    </div>
+
+    <div class="container hidden" id="dashboard">
+      <h2>Dashboard</h2>
+      <p id="user-info"></p>
+      <button onclick="showProfile()">Edit Profile</button>
+      <button onclick="showOrderForm()">Place Order</button>
+      <button onclick="loadMyOrders()">My Orders</button>
+      <button onclick="signOut()">Logout</button>
+    </div>
+
+    <div class="container hidden" id="profile-section">
+      <h2>Profile</h2>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="file" id="profilePic" />
+      <textarea id="bio" placeholder="Bio"></textarea>
+      <button onclick="updateProfile()">Update Profile</button>
+      <div id="profile-msg" class="message hidden">Profile Updated!</div>
+    </div>
+
+    <div class="container hidden" id="order-form">
+      <h2>Place Order</h2>
+      <input type="text" id="freelancerId" placeholder="Freelancer ID" />
+      <input type="number" id="budget" placeholder="Budget" />
+      <textarea id="description" placeholder="Order Description"></textarea>
+      <input type="file" id="orderFile" />
+      <button onclick="placeOrder()">Submit Order</button>
+    </div>
+
+    <div class="container hidden" id="my-orders">
+      <h2>My Orders</h2>
+      <div id="orders-list"></div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Freelance Platform</p>
+  </footer>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    let currentUser;
+
+    function showSection(id) {
+      document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, password).then(user => {
+        currentUser = user.user;
+        showSection("dashboard");
+        document.getElementById("user-info").innerText = `Welcome, ${currentUser.email}`;
+      });
+    }
+
+    function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.createUserWithEmailAndPassword(email, password).then(user => {
+        currentUser = user.user;
+        db.collection("users").doc(currentUser.uid).set({
+          email: currentUser.email,
+          credits: 100,
+          role: "buyer"
+        });
+        showSection("dashboard");
+      });
+    }
+
+    function signOut() {
+      auth.signOut().then(() => {
+        currentUser = null;
+        showSection("auth-section");
+      });
+    }
+
+    function showProfile() {
+      showSection("profile-section");
+    }
+
+    function updateProfile() {
+      const username = document.getElementById("username").value;
+      const bio = document.getElementById("bio").value;
+      const file = document.getElementById("profilePic").files[0];
+
+      if (file) {
+        const ref = storage.ref().child(`profilePics/${currentUser.uid}`);
+        ref.put(file).then(() => ref.getDownloadURL()).then(url => {
+          return db.collection("users").doc(currentUser.uid).update({ username, bio, profilePic: url });
+        });
+      } else {
+        db.collection("users").doc(currentUser.uid).update({ username, bio });
+      }
+
+      document.getElementById("profile-msg").classList.remove("hidden");
+      setTimeout(() => document.getElementById("profile-msg").classList.add("hidden"), 2000);
+    }
+
+    function showOrderForm() {
+      showSection("order-form");
+    }
+
+    async function placeOrder() {
+      const freelancerId = document.getElementById("freelancerId").value;
+      const budget = parseInt(document.getElementById("budget").value);
+      const description = document.getElementById("description").value;
+      const file = document.getElementById("orderFile").files[0];
+
+      const userDoc = await db.collection("users").doc(currentUser.uid).get();
+      if (userDoc.data().credits < budget) return alert("Insufficient credits!");
+
+      let fileUrl = "";
+      if (file) {
+        const ref = storage.ref().child(`orders/${Date.now()}_${file.name}`);
+        await ref.put(file);
+        fileUrl = await ref.getDownloadURL();
+      }
+
+      await db.collection("orders").add({
+        buyerId: currentUser.uid,
+        freelancerId,
+        budget,
+        description,
+        fileUrl,
+        status: "pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      alert("Order placed!");
+    }
+
+    function loadMyOrders() {
+      showSection("my-orders");
+      const ordersRef = db.collection("orders").where("buyerId", "==", currentUser.uid);
+      ordersRef.onSnapshot(snapshot => {
+        const orders = snapshot.docs.map(doc => doc.data());
+        const html = orders.map(o => `<div>
+          <p><strong>To:</strong> ${o.freelancerId}</p>
+          <p>${o.description}</p>
+          <p><strong>Status:</strong> ${o.status}</p>
+          ${o.fileUrl ? `<a href="${o.fileUrl}" target="_blank">View File</a>` : ""}
+        </div><hr>`).join("");
+        document.getElementById("orders-list").innerHTML = html;
+      });
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        showSection("dashboard");
+        document.getElementById("user-info").innerText = `Welcome, ${user.email}`;
+      } else {
+        showSection("auth-section");
+      }
+    });
+  </script>
+</body>
+</html>

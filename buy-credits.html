@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Buy Credits - Freelance Site</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  /* Fiverr-like clean theme */
+  body {
+    font-family: 'Inter', sans-serif;
+    margin: 0; padding: 0;
+    background: #f7f7f7;
+    color: #333;
+  }
+  header {
+    background: #1dbf73;
+    color: white;
+    padding: 15px 30px;
+    font-size: 24px;
+    font-weight: 600;
+  }
+  main {
+    max-width: 600px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 8px;
+    padding: 30px 40px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  }
+  h1 {
+    margin-bottom: 25px;
+    font-weight: 700;
+    color: #1dbf73;
+  }
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  select, input[type="text"], textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  button {
+    background-color: #1dbf73;
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    font-size: 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: 600;
+  }
+  button:hover {
+    background-color: #179e5d;
+  }
+  .message {
+    margin-top: 20px;
+    font-weight: 600;
+  }
+  .error {
+    color: #d93025;
+  }
+  .success {
+    color: #188038;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  Freelance Site - Buy Credits
+</header>
+
+<main>
+  <h1>Submit Gift Card Code</h1>
+  <form id="giftCardForm">
+    <label for="giftType">Gift Card Type</label>
+    <select id="giftType" required>
+      <option value="" disabled selected>Select Gift Card</option>
+      <option value="Amazon">Amazon</option>
+      <option value="Flipkart">Flipkart</option>
+      <option value="Play Store">Play Store</option>
+      <option value="Roblox">Roblox</option>
+    </select>
+
+    <label for="giftCode">Gift Card Code</label>
+    <textarea id="giftCode" placeholder="Enter your gift card code here" required></textarea>
+
+    <label for="note">Note (Optional)</label>
+    <textarea id="note" placeholder="Add any notes (e.g., purchase date)"></textarea>
+
+    <button type="submit">Submit Code</button>
+  </form>
+
+  <div class="message" id="formMessage"></div>
+</main>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  // Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDwxGQ3GxqZG9hqJAmwfF2ylNRC7uubfbw",
+    authDomain: "hnuhnil.firebaseapp.com",
+    projectId: "hnuhnil",
+    storageBucket: "hnuhnil.firebasestorage.app",
+    messagingSenderId: "731934360686",
+    appId: "1:731934360686:web:9c49e731072cf0a61f927f"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Elements
+  const form = document.getElementById('giftCardForm');
+  const messageDiv = document.getElementById('formMessage');
+
+  // Check if user is logged in
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      messageDiv.textContent = "You must be logged in to submit gift cards.";
+      messageDiv.className = "message error";
+      form.style.display = "none";
+    } else {
+      form.style.display = "block";
+      messageDiv.textContent = "";
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    messageDiv.textContent = "";
+    messageDiv.className = "message";
+
+    const user = auth.currentUser;
+    if (!user) {
+      messageDiv.textContent = "User not logged in.";
+      messageDiv.className = "message error";
+      return;
+    }
+
+    const giftType = document.getElementById('giftType').value;
+    const giftCode = document.getElementById('giftCode').value.trim();
+    const note = document.getElementById('note').value.trim();
+
+    if (!giftType || !giftCode) {
+      messageDiv.textContent = "Please select gift card type and enter code.";
+      messageDiv.className = "message error";
+      return;
+    }
+
+    try {
+      await db.collection('giftCardSubmissions').add({
+        userId: user.uid,
+        email: user.email,
+        type: giftType,
+        code: giftCode,
+        note: note,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        status: "pending"
+      });
+      messageDiv.textContent = "Gift card code submitted! Our team will review it soon.";
+      messageDiv.className = "message success";
+      form.reset();
+    } catch (err) {
+      messageDiv.textContent = "Error submitting code: " + err.message;
+      messageDiv.className = "message error";
+    }
+  });
+</script>
+
+</body>
+</html>

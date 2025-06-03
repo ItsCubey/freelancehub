@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Place Order</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #1dbf73;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #17a15b;
+    }
+    label {
+      margin-top: 15px;
+      display: block;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+<h2 style="text-align:center;">Place an Order</h2>
+<form id="orderForm">
+  <label for="title">Order Title</label>
+  <input type="text" id="title" placeholder="Order Title" required />
+
+  <label for="description">Order Description</label>
+  <textarea id="description" placeholder="Order Description" required></textarea>
+
+  <label for="budget">Budget</label>
+  <input type="number" id="budget" placeholder="Budget" min="1" required />
+
+  <label for="deadline">Deadline</label>
+  <input type="date" id="deadline" required />
+
+  <label for="freelancerSelect">Select Freelancer</label>
+  <select id="freelancerSelect" required>
+    <option value="">Select a Freelancer</option>
+  </select>
+
+  <button type="submit">Submit Order</button>
+</form>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDwxGQ3GxqZG9hqJAmwfF2ylNRC7uubfbw",
+    authDomain: "hnuhnil.firebaseapp.com",
+    projectId: "hnuhnil",
+    storageBucket: "hnuhnil.firebasestorage.app",
+    messagingSenderId: "731934360686",
+    appId: "1:731934360686:web:9c49e731072cf0a61f927f"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Populate freelancer dropdown
+  async function loadFreelancers() {
+    const select = document.getElementById('freelancerSelect');
+    try {
+      const snapshot = await db.collection("users").where("role", "==", "freelancer").get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const option = document.createElement('option');
+        option.value = doc.id; // save freelancer UID as value
+        option.textContent = data.displayName || data.email || "Unnamed Freelancer";
+        select.appendChild(option);
+      });
+    } catch (error) {
+      console.error("Error loading freelancers:", error);
+    }
+  }
+
+  loadFreelancers();
+
+  document.getElementById("orderForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById("title").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const budget = parseFloat(document.getElementById("budget").value);
+    const deadline = document.getElementById("deadline").value;
+    const freelancerId = document.getElementById("freelancerSelect").value;
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please login first.");
+      return;
+    }
+
+    if (!freelancerId) {
+      alert("Please select a freelancer.");
+      return;
+    }
+
+    const userDoc = await db.collection("users").doc(user.uid).get();
+    if (!userDoc.exists) {
+      alert("User data not found.");
+      return;
+    }
+
+    const credits = userDoc.data().credits || 0;
+    if (credits < budget) {
+      alert("Insufficient credits.");
+      return;
+    }
+
+    // Deduct credits immediately
+    await db.collection("users").doc(user.uid).update({
+      credits: credits - budget
+    });
+
+    // Save order
+    await db.collection("orders").add({
+      title,
+      description,
+      budget,
+      deadline,
+      freelancerId,
+      buyerId: user.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status: "pending"
+    });
+
+    alert("Order placed successfully!");
+    document.getElementById("orderForm").reset();
+  });
+
+  auth.onAuthStateChanged((user) => {
+    if (!user) {
+      window.location.href = "login.html";
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Freelancer Profile</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .skills-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .skill-chip {
+      background-color: #0c9;
+      color: white;
+      padding: 0.3rem 0.6rem;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    .skill-chip span {
+      margin-left: 0.5rem;
+      cursor: pointer;
+    }
+
+    button {
+      margin-top: 2rem;
+      padding: 0.7rem 2rem;
+      background-color: #0c9;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0a7;
+    }
+
+    .profile-pic {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+      margin: 1rem auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Edit Your Profile</h2>
+    <img id="profileImage" class="profile-pic" src="https://i.pravatar.cc/300" alt="Profile Picture">
+
+    <label>Name</label>
+    <input type="text" id="name">
+
+    <label>Bio</label>
+    <textarea id="bio" rows="3"></textarea>
+
+    <label>Category</label>
+    <select id="category">
+      <option value="">Select a category</option>
+      <option>Graphic Design</option>
+      <option>Web Development</option>
+      <option>Content Writing</option>
+      <option>Video Editing</option>
+    </select>
+
+    <label>Skills</label>
+    <input type="text" id="skillInput" placeholder="Add skill and press Enter">
+    <div class="skills-container" id="skillsContainer"></div>
+
+    <label>Rating</label>
+    <input type="text" id="rating" placeholder="e.g. 4">
+
+    <label>Image URL</label>
+    <input type="text" id="image" placeholder="https://i.pravatar.cc/300">
+
+    <button onclick="saveProfile()">Save Profile</button>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwxGQ3GxqZG9hqJAmwfF2ylNRC7uubfbw",
+      authDomain: "hnuhnil.firebaseapp.com",
+      projectId: "hnuhnil",
+      storageBucket: "hnuhnil.firebasestorage.app",
+      messagingSenderId: "731934360686",
+      appId: "1:731934360686:web:9c49e731072cf0a61f927f"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const nameInput = document.getElementById('name');
+    const bioInput = document.getElementById('bio');
+    const categoryInput = document.getElementById('category');
+    const ratingInput = document.getElementById('rating');
+    const imageInput = document.getElementById('image');
+    const profileImage = document.getElementById('profileImage');
+
+    const skillInput = document.getElementById('skillInput');
+    const skillsContainer = document.getElementById('skillsContainer');
+    let skills = [];
+
+    skillInput.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const skill = skillInput.value.trim();
+        if (skill && !skills.includes(skill)) {
+          skills.push(skill);
+          updateSkillsUI();
+          skillInput.value = '';
+        }
+      }
+    });
+
+    function updateSkillsUI() {
+      skillsContainer.innerHTML = '';
+      skills.forEach(skill => {
+        const chip = document.createElement('div');
+        chip.className = 'skill-chip';
+        chip.innerHTML = `${skill}<span onclick="removeSkill('${skill}')">✕</span>`;
+        skillsContainer.appendChild(chip);
+      });
+    }
+
+    function removeSkill(skill) {
+      skills = skills.filter(s => s !== skill);
+      updateSkillsUI();
+    }
+
+    function loadProfile(uid) {
+      db.collection('users').doc(uid).get().then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          nameInput.value = data.name || '';
+          bioInput.value = data.bio || '';
+          categoryInput.value = data.category || '';
+          ratingInput.value = data.rating || '';
+          imageInput.value = data.image || '';
+          profileImage.src = data.image || 'https://i.pravatar.cc/300';
+          skills = data.skills || [];
+          updateSkillsUI();
+        }
+      });
+    }
+
+    function saveProfile() {
+      const updatedData = {
+        name: nameInput.value.trim(),
+        bio: bioInput.value.trim(),
+        category: categoryInput.value,
+        skills: skills,
+        rating: Number(ratingInput.value),
+        image: imageInput.value.trim(),
+        role: 'freelancer',
+      };
+
+      const uid = auth.currentUser?.uid;
+      if (!uid) {
+        alert("You're not logged in.");
+        return;
+      }
+
+      db.collection('users').doc(uid).set(updatedData, { merge: true })
+        .then(() => alert("Profile updated successfully!"))
+        .catch(err => alert("Error saving profile: " + err));
+    }
+
+    // Live image preview
+    imageInput.addEventListener('input', () => {
+      profileImage.src = imageInput.value.trim() || 'https://i.pravatar.cc/300';
+    });
+
+    // Wait for auth to load and get user data
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loadProfile(user.uid);
+      } else {
+        alert("Please log in to edit your profile.");
+        // window.location.href = "/login.html"; // Optional redirect
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FreelanceHub - Your Freelance Marketplace</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #fff;
+      color: #222;
+      line-height: 1.6;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* HEADER */
+
+    header {
+      background-color: #00a86b;
+      color: white;
+      padding: 20px 60px;
+      position: sticky;
+      top: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 9999;
+      box-shadow: 0 2px 10px rgba(0, 168, 107, 0.3);
+    }
+
+    header h1 {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+    }
+
+    nav a {
+      font-weight: 600;
+      margin-left: 25px;
+      font-size: 17px;
+      transition: all 0.3s ease;
+      padding-bottom: 4px;
+      border-bottom: 3px solid transparent;
+    }
+
+    nav a:hover {
+      border-bottom: 3px solid #def6e3;
+      color: #def6e3;
+    }
+
+    /* HERO */
+
+    .hero {
+      position: relative;
+      height: 100vh;
+      color: white;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .hero video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      filter: brightness(0.5);
+      user-select: none;
+    }
+
+    .hero-content {
+      max-width: 900px;
+      padding: 40px 25px;
+      background: rgba(0, 168, 107, 0.75);
+      border-radius: 14px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-content h2 {
+      font-size: 56px;
+      color: #cdffe8;
+      font-weight: 900;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 10px #a7ffd6;
+    }
+
+    .hero-content p {
+      font-size: 22px;
+      margin-bottom: 30px;
+      font-weight: 600;
+      text-shadow: 1px 1px 8px #004d26;
+    }
+
+    .hero-buttons a {
+      background: white;
+      color: #00a86b;
+      font-weight: 700;
+      padding: 16px 38px;
+      border-radius: 8px;
+      margin: 0 12px;
+      box-shadow: 0 5px 15px rgba(0, 168, 107, 0.5);
+      transition: 0.3s ease;
+      display: inline-block;
+    }
+
+    .hero-buttons a:hover {
+      background: #def6e3;
+      box-shadow: 0 7px 20px rgba(0, 168, 107, 0.7);
+      color: #00753b;
+    }
+
+    /* SECTIONS */
+
+    section {
+      padding: 80px 60px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    section h2 {
+      text-align: center;
+      font-size: 42px;
+      margin-bottom: 45px;
+      color: #00a86b;
+      font-weight: 900;
+      letter-spacing: 1.1px;
+    }
+
+    /* FEATURES */
+
+    .features {
+      display: flex;
+      justify-content: space-around;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .feature-card {
+      background: #f3fff6;
+      border-radius: 16px;
+      padding: 35px 25px;
+      flex: 1 1 280px;
+      max-width: 300px;
+      box-shadow: 0 10px 20px rgba(0, 168, 107, 0.15);
+      transition: transform 0.3s ease;
+      cursor: default;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 30px rgba(0, 168, 107, 0.3);
+    }
+
+    .feature-icon {
+      width: 65px;
+      margin-bottom: 25px;
+    }
+
+    .feature-card h3 {
+      font-size: 24px;
+      margin-bottom: 14px;
+      color: #006b43;
+      font-weight: 800;
+    }
+
+    .feature-card p {
+      font-size: 16px;
+      line-height: 1.4;
+      color: #354d36;
+    }
+
+    /* CATEGORIES */
+
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 32px;
+    }
+
+    .category-card {
+      border-radius: 14px;
+      background: #e7fff0;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(0, 168, 107, 0.12);
+      transition: transform 0.3s ease;
+    }
+
+    .category-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 15px 35px rgba(0, 168, 107, 0.3);
+    }
+
+    .category-card img {
+      width: 80px;
+      margin-bottom: 15px;
+    }
+
+    .category-card h3 {
+      font-size: 22px;
+      margin-bottom: 8px;
+      color: #007f4f;
+    }
+
+    .category-card p {
+      font-size: 15px;
+      color: #2a4d2b;
+      font-weight: 600;
+    }
+
+    /* PRICING */
+
+    .pricing-cards {
+      display: flex;
+      justify-content: center;
+      gap: 36px;
+      flex-wrap: wrap;
+    }
+
+    .pricing-card {
+      background: #def6e3;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0, 168, 107, 0.18);
+      flex: 1 1 280px;
+      max-width: 320px;
+      padding: 40px 35px;
+      text-align: center;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+      border: 3px solid transparent;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-12px);
+      border-color: #00a86b;
+      box-shadow: 0 18px 45px rgba(0, 168, 107, 0.35);
+    }
+
+    .pricing-card h3 {
+      font-size: 28px;
+      margin-bottom: 18px;
+      font-weight: 900;
+      color: #006b40;
+    }
+
+    .pricing-price {
+      font-size: 38px;
+      font-weight: 900;
+      margin-bottom: 20px;
+      color: #004d26;
+    }
+
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 25px;
+      color: #224422;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .pricing-features li {
+      margin: 12px 0;
+    }
+
+    .pricing-card button {
+      background: #00a86b;
+      border: none;
+      color: white;
+      padding: 14px 40px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 17px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .pricing-card button:hover {
+      background: #006b38;
+    }
+
+    /* TESTIMONIALS */
+
+    .testimonials {
+      background-color: #e4f9e2;
+      padding: 60px 60px;
+      border-radius: 16px;
+      max-width: 900px;
+      margin: 60px auto;
+      box-shadow: 0 15px 40px rgba(0, 168, 107, 0.22);
+    }
+
+    .testimonial-item {
+      margin-bottom: 40px;
+      font-style: italic;
+      font-size: 19px;
+      color: #004d20;
+      position: relative;
+      padding-left: 40px;
+    }
+
+    .testimonial-item:before {
+      content: '“';
+      font-size: 40px;
+      font-weight: 900;
+      position: absolute;
+      left: 10px;
+      top: 3px;
+      color: #007f46;
+    }
+
+    .testimonial-author {
+      margin-top: 8px;
+      font-weight: 700;
+      font-size: 17px;
+      color: #006632;
+      text-align: right;
+    }
+
+    /* FAQ */
+
+    .faq {
+      max-width: 900px;
+      margin: 50px auto;
+      text-align: left;
+    }
+
+    .faq h3 {
+      color: #007f49;
+      margin-bottom: 12px;
+      font-size: 24px;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      padding-right: 24px;
+    }
+
+    .faq h3::after {
+      content: '+';
+      position: absolute;
+      right: 0;
+      font-weight: 900;
+      font-size: 26px;
+      color: #00a86b;
+      transition: transform 0.3s ease;
+    }
+
+    .faq h3.active::after {
+      content: '-';
+      color: #004d26;
+      transform: rotate(180deg);
+    }
+
+    .faq p {
+      font-size: 16px;
+      color: #2c5d2a;
+      margin-bottom: 32px;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .faq p.active {
+      display: block;
+    }
+
+    /* NEWSLETTER */
+
+    .newsletter {
+      background-color: #d9f0d6;
+      padding: 60px 60px;
+      text-align: center;
+      border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(0, 168, 107, 0.15);
+      max-width: 700px;
+      margin: 60px auto;
+    }
+
+    .newsletter h2 {
+      margin-bottom: 24px;
+      font-weight: 900;
+      color: #007b43;
+    }
+
+    .newsletter form {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .newsletter input[type="email"] {
+      padding: 15px 18px;
+      border-radius: 10px;
+      border: 2px solid #00a86b;
+      font-size: 17px;
+      flex: 1 1 300px;
+      max-width: 400px;
+      transition: border-color 0.3s ease;
+    }
+
+    .newsletter input[type="email"]:focus {
+      outline: none;
+      border-color: #004d26;
+    }
+
+    .newsletter button {
+      background-color: #00a86b;
+      border: none;
+      padding: 15px 38px;
+      color: white;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 17px;
+      transition: background 0.3s ease;
+    }
+
+    .newsletter button:hover {
+      background-color: #004d26;
+    }
+
+    /* FOOTER */
+
+    footer {
+      background-color: #004d26;
+      color: #b0d6aa;
+      padding: 60px 60px;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    footer p {
+      max-width: 900px;
+      margin: auto;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    /* RESPONSIVE */
+
+    @media (max-width: 768px) {
+      header {
+        padding: 15px 30px;
+      }
+      .hero-content h2 {
+        font-size: 38px;
+      }
+      .hero-content p {
+        font-size: 18px;
+      }
+      section {
+        padding: 50px 30px;
+      }
+      .features {
+        flex-direction: column;
+        align-items: center;
+      }
+      .pricing-cards {
+        flex-direction: column;
+        align-items: center;
+      }
+      .categories {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      nav a {
+        margin-left: 12px;
+        font-size: 15px;
+      }
+      .categories {
+        grid-template-columns: 1fr;
+      }
+      .hero-content {
+        padding: 25px 15px;
+      }
+      .hero-content h2 {
+        font-size: 28px;
+      }
+      .hero-content p {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FreelanceHub</h1>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#categories">Categories</a>
+      <a href="login.html">LogIn/SignUp</a>
+      <a href="order.html">Order</a>
+      <a href="freelancer-dashboard.html">Freelancers Dashbord</a>
+      <a href="buyer-dashboard.html">Clint Dashbord</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <video autoplay muted loop playsinline>
+      <source src="https://cdn.videvo.net/videvo_files/video/free/2019-03/small_watermarked/190220_02_Green_Laptop_4k_1080p_016_preview.webm" type="video/webm" />
+      Sorry, your browser doesn't support embedded videos.
+    </video>
+    <div class="hero-content" role="banner">
+      <h2>Find Your Perfect Freelancer Today</h2>
+      <p>Hire professionals for any project with confidence and ease.</p>
+      <div class="hero-buttons">
+        <a href="order.html" role="button" aria-label="login">login</a>
+        <a href="buy-credits.html" role="button" aria-label="Buy-credits">Buy-Credits</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" aria-label="Platform Features">
+    <h2>Why Choose FreelanceHub?</h2>
+    <div class="features">
+      <article class="feature-card" tabindex="0">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/3603/3603075.png"
+          alt="Secure Payments Icon"
+          class="feature-icon"
+          loading="lazy"
+        />
+        <h3>Secure Payments</h3>
+        <p>Safe and quick transactions with built-in escrow for peace of mind.</p>
+      </article>
+      <article class="feature-card" tabindex="0">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/786/786407.png"
+          alt="Verified Freelancers Icon"
+          class="feature-icon"
+          loading="lazy"
+        />
+        <h3>Verified Freelancers</h3>
+        <p>Top-rated professionals verified by our team to ensure quality.</p>
+      </article>
+      <article class="feature-card" tabindex="0">
+        <img
+          src="https://cdn.iconscout.com/icon/premium/png-512-thumb/gift-card-6985556-5698969.png?f=webp&w=512"
+          alt="Easy Communication Icon"
+          class="feature-icon"
+          loading="lazy"
+        />
+        <h3>Credits System</h3>
+        <p>A system where We use Credits insted of money you can buy it and buy gift-card with it.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="categories" aria-label="Freelance Job Categories">
+    <h2>Popular Job Categories</h2>
+    <div class="categories">
+      <div class="category-card" tabindex="0">
+        <img src="https://cdn-icons-png.flaticon.com/512/1055/1055672.png" alt="Web Development" loading="lazy" />
+        <h3>Web Development</h3>
+        <p>Frontend, backend, full-stack & eCommerce experts.</p>
+      </div>
+      <div class="category-card" tabindex="0">
+        <img src="https://cdn-icons-png.flaticon.com/512/1046/1046869.png" alt="Graphic Design" loading="lazy" />
+        <h3>Graphic Design</h3>
+        <p>Logo design, branding, illustration, and digital art.</p>
+      </div>
+      <div class="category-card" tabindex="0">
+        <img src="https://cdn-icons-png.flaticon.com/512/2920/2920049.png" alt="Writing & Translation" loading="lazy" />
+        <h3>Writing & Translation</h3>
+        <p>Copywriting, articles, translations, and creative writing.</p>
+      </div>
+      <div class="category-card" tabindex="0">
+        <img src="https://cdn-icons-png.flaticon.com/512/3029/3029787.png" alt="Digital Marketing" loading="lazy" />
+        <h3>Digital Marketing</h3>
+        <p>SEO, social media, PPC, and email marketing specialists.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="testimonials" aria-label="Customer Testimonials">
+    <h2>What Our Clients Say</h2>
+    <div class="testimonials">
+      <blockquote class="testimonial-item" tabindex="0">
+        "FreelanceHub made it so easy to find the right freelancer for my project. Highly recommend!"
+        <footer class="testimonial-author">- Sarah W.</footer>
+      </blockquote>
+      <blockquote class="testimonial-item" tabindex="0">
+        "The platform is smooth, reliable, and the communication tools are fantastic."
+        <footer class="testimonial-author">- David R.</footer>
+      </blockquote>
+      <blockquote class="testimonial-item" tabindex="0">
+        "Excellent support and talented freelancers. It saved my business time and money!"
+        <footer class="testimonial-author">- Priya S.</footer>
+      </blockquote>
+    </div>
+  </section>
+
+  <section id="faq" aria-label="Frequently Asked Questions">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+      <div>
+        <h3 tabindex="0" aria-expanded="false" aria-controls="faq1">How do I hire a freelancer?</h3>
+        <p id="faq1">Browse categories, check profiles, and message freelancers directly. Once you find the perfect match, place an order securely.</p>
+      </div>
+      <div>
+        <h3 tabindex="0" aria-expanded="false" aria-controls="faq2">What payment methods do you accept?</h3>
+        <p id="faq2">We accept all major credit cards, PayPal, and some regional payment options depending on your location.</p>
+      </div>
+      <div>
+        <h3 tabindex="0" aria-expanded="false" aria-controls="faq3">Is my payment safe?</h3>
+        <p id="faq3">Yes! We use escrow to hold funds until your project is completed and you are satisfied.</p>
+      </div>
+      <div>
+        <h3 tabindex="0" aria-expanded="false" aria-controls="faq4">Can I cancel an order?</h3>
+        <p id="faq4">You can request cancellation anytime before the freelancer delivers the work. Cancellation policies apply.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 FreelanceHub. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // FAQ Accordion functionality
+    const faqItems = document.querySelectorAll(".faq h3");
+    faqItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        const expanded = item.getAttribute("aria-expanded") === "true";
+        item.setAttribute("aria-expanded", !expanded);
+        const panel = document.getElementById(item.getAttribute("aria-controls"));
+        if (!expanded) {
+          panel.style.display = "block";
+        } else {
+          panel.style.display = "none";
+        }
+      });
+      item.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          item.click();
+        }
+      });
+    });
+
+    // Newsletter form submission
+    const newsletterForm = document.querySelector("#newsletter form");
+    newsletterForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const emailInput = newsletterForm.querySelector('input[type="email"]');
+      if (emailInput.value.trim() === "") {
+        alert("Please enter a valid email address.");
+        return;
+      }
+      alert(`Thank you for subscribing, ${emailInput.value}!`);
+      emailInput.value = "";
+    });
+  </script>
+</body>
+</html>

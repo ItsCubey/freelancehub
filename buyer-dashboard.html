@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Buyer Dashboard</title>
+<style>
+  /* Basic Fiverr-inspired styling */
+  body {
+    margin: 0; font-family: 'Inter', sans-serif; background: #f7f7f7; color: #333;
+  }
+  header {
+    background: #1dbf73; color: white; padding: 15px 30px; font-size: 24px; font-weight: 700;
+  }
+  .container {
+    display: flex;
+    min-height: 90vh;
+  }
+  nav {
+    width: 250px;
+    background: #fff;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+  }
+  nav h2 {
+    margin-bottom: 20px;
+    color: #1dbf73;
+  }
+  nav a {
+    display: block;
+    margin-bottom: 15px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 4px;
+  }
+  nav a:hover {
+    background: #1dbf73;
+    color: white;
+  }
+  main {
+    flex-grow: 1;
+    padding: 30px 40px;
+  }
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
+  }
+  .card h3 {
+    margin-top: 0;
+    color: #1dbf73;
+  }
+  .credits {
+    font-size: 48px;
+    font-weight: 700;
+    margin: 20px 0;
+  }
+  button {
+    background: #1dbf73;
+    border: none;
+    color: white;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: #179e5d;
+  }
+  ul.orders-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  ul.orders-list li {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+  }
+  ul.orders-list li:last-child {
+    border-bottom: none;
+  }
+</style>
+</head>
+<body>
+
+<header>Buyer Dashboard</header>
+
+<div class="container">
+  <nav>
+    <h2>Hello, Buyer</h2>
+    <a href="buyer-dashboard.html">Dashboard</a>
+    <a href="order.html">Place Order</a>
+    <a href="my-orders.html">My Orders</a>
+    <a href="buy-credits.html">Buy Credits</a>
+    <a href="profile.html">Profile</a>
+    <a href="logout.html">Logout</a>
+  </nav>
+
+  <main>
+    <div class="card">
+      <h3>Your Credits</h3>
+      <div class="credits" id="creditsDisplay">Loading...</div>
+      <button onclick="location.href='buy-credits.html'">Buy More Credits</button>
+    </div>
+
+    <div class="card">
+      <h3>Recent Orders</h3>
+      <ul class="orders-list" id="recentOrders">
+        <li>Loading orders...</li>
+      </ul>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDwxGQ3GxqZG9hqJAmwfF2ylNRC7uubfbw",
+    authDomain: "hnuhnil.firebaseapp.com",
+    projectId: "hnuhnil",
+    storageBucket: "hnuhnil.firebasestorage.app",
+    messagingSenderId: "731934360686",
+    appId: "1:731934360686:web:9c49e731072cf0a61f927f"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const creditsDisplay = document.getElementById('creditsDisplay');
+  const recentOrders = document.getElementById('recentOrders');
+
+  auth.onAuthStateChanged(async user => {
+    if (!user) {
+      window.location.href = 'login.html'; // redirect if not logged in
+      return;
+    }
+
+    // Fetch user data
+    const doc = await db.collection('users').doc(user.uid).get();
+    if (!doc.exists) {
+      creditsDisplay.textContent = "User data not found.";
+      return;
+    }
+
+    const data = doc.data();
+
+    // Show credits
+    creditsDisplay.textContent = data.credits ?? 0;
+
+    // Fetch recent orders where buyerId == user.uid
+    const ordersSnapshot = await db.collection('orders')
+      .where('buyerEmail', '==', user.email)
+      .orderBy('createdAt', 'desc')
+      .limit(5)
+      .get();
+
+    if (ordersSnapshot.empty) {
+      recentOrders.innerHTML = '<li>No recent orders</li>';
+      return;
+    }
+
+    recentOrders.innerHTML = '';
+    ordersSnapshot.forEach(doc => {
+      const order = doc.data();
+      const status = order.status || 'pending';
+      const li = document.createElement('li');
+      li.textContent = `${order.title || 'Untitled Order'} - Status: ${status}`;
+      recentOrders.appendChild(li);
+    });
+  });
+</script>
+
+</body>
+</html>
