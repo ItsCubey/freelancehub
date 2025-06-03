@@ -53,7 +53,7 @@
   <label for="title">Order Title</label>
   <input type="text" id="title" placeholder="Order Title" required />
 
-  <label for="description">Order Description(include email/phone also so freelancer can submit work)</label>
+  <label for="description">Order Description (include email/phone for delivery)</label>
   <textarea id="description" placeholder="Order Description" required></textarea>
 
   <label for="budget">Budget</label>
@@ -62,10 +62,8 @@
   <label for="deadline">Deadline</label>
   <input type="date" id="deadline" required />
 
-  <label for="freelancerSelect">Select Freelancer</label>
-  <select id="freelancerSelect" required>
-    <option value="">Select a Freelancer</option>
-  </select>
+  <label for="freelancerEmail">Freelancer Email</label>
+  <input type="email" id="freelancerEmail" placeholder="Enter Freelancer's Email" required />
 
   <button type="submit">Submit Order</button>
 </form>
@@ -84,25 +82,6 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  // Populate freelancer dropdown
-  async function loadFreelancers() {
-    const select = document.getElementById('freelancerSelect');
-    try {
-      const snapshot = await db.collection("users").where("role", "==", "freelancer").get();
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const option = document.createElement('option');
-        option.value = doc.id; // save freelancer UID as value
-        option.textContent = data.displayName || data.email || "Unnamed Freelancer";
-        select.appendChild(option);
-      });
-    } catch (error) {
-      console.error("Error loading freelancers:", error);
-    }
-  }
-
-  loadFreelancers();
-
   document.getElementById("orderForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -110,7 +89,7 @@
     const description = document.getElementById("description").value.trim();
     const budget = parseFloat(document.getElementById("budget").value);
     const deadline = document.getElementById("deadline").value;
-    const freelancerId = document.getElementById("freelancerSelect").value;
+    const freelancerEmail = document.getElementById("freelancerEmail").value.trim();
 
     const user = auth.currentUser;
     if (!user) {
@@ -118,42 +97,62 @@
       return;
     }
 
-    if (!freelancerId) {
-      alert("Please select a freelancer.");
+    if (!freelancerEmail) {
+      alert("Please enter the freelancer's email.");
       return;
     }
 
-    const userDoc = await db.collection("users").doc(user.uid).get();
-    if (!userDoc.exists) {
-      alert("User data not found.");
-      return;
+    try {
+      // Get buyer data
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      if (!userDoc.exists) {
+        alert("User data not found.");
+        return;
+      }
+
+      const credits = userDoc.data().credits || 0;
+      if (credits < budget) {
+        alert("Insufficient credits.");
+        return;
+      }
+
+      // Find freelancer by email
+      const freelancerQuery = await db.collection("users")
+        .where("email", "==", freelancerEmail)
+        .where("role", "==", "freelancer")
+        .limit(1)
+        .get();
+
+      if (freelancerQuery.empty) {
+        alert("Freelancer not found or invalid.");
+        return;
+      }
+
+      const freelancerId = freelancerQuery.docs[0].id;
+
+      // Deduct credits from buyer
+      await db.collection("users").doc(user.uid).update({
+        credits: credits - budget
+      });
+
+      // Save order
+      await db.collection("orders").add({
+        title,
+        description,
+        budget,
+        deadline,
+        freelancerId,
+        buyerId: user.uid,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        status: "pending"
+      });
+
+      alert("Order placed successfully!");
+      document.getElementById("orderForm").reset();
+    } catch (error) {
+      console.error("Error placing order:", error);
+      alert("Failed to place order. Please try again.");
     }
-
-    const credits = userDoc.data().credits || 0;
-    if (credits < budget) {
-      alert("Insufficient credits.");
-      return;
-    }
-
-    // Deduct credits immediately
-    await db.collection("users").doc(user.uid).update({
-      credits: credits - budget
-    });
-
-    // Save order
-    await db.collection("orders").add({
-      title,
-      description,
-      budget,
-      deadline,
-      freelancerId,
-      buyerId: user.uid,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      status: "pending"
-    });
-
-    alert("Order placed successfully!");
-    document.getElementById("orderForm").reset();
   });
 
   auth.onAuthStateChanged((user) => {
