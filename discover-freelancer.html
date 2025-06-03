@@ -139,6 +139,7 @@
             category: data.category || "Unknown",
             skills: data.skills || [],
             rating: data.rating || 0
+            email: data.email || 0
           });
         }
       });
@@ -164,6 +165,7 @@
           <div class="freelancer-bio">${freelancer.bio}</div>
           <div class="rating">⭐ ${freelancer.rating}</div>
           <div class="freelancer-skills">Skills: ${freelancer.skills.join(", ")}</div>
+          <div class="email">⭐ ${freelancer.email}</div>
         `;
         container.appendChild(card);
       });
